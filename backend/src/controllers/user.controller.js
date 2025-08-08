@@ -1,24 +1,22 @@
 import User from "../models/user.model.js";
 
-// ─── Get All Users (Admin Use) ─────────────────────────────────────
+// ─── Get All Users (Admin Only) ──────────────────────────────
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password"); // Remove password from results
+    const users = await User.find().select("-password");
     res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch users" });
   }
 };
 
-// ─── Get User by ID (if used elsewhere) ─────────────────────────────
+// ─── Get Specific User by ID (for Admin or general use) ────────
 export const getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
     const user = await User.findById(userId).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.status(200).json(user);
   } catch (err) {
@@ -26,25 +24,24 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// ─── Get Logged-in User's Profile ──────────────────────────────────
+// ─── Get Logged-in User Profile ───────────────────────────────
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.status(200).json(user);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch user profile" });
+    res.status(500).json({ error: "Failed to fetch profile" });
   }
 };
 
-// ─── Update Profile ───────────────────────────────────────────────
+// ─── Update Logged-in User Profile ────────────────────────────
 export const updateUserProfile = async (req, res) => {
   try {
     const { username, profilePic } = req.body;
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       { username, profilePic },
@@ -57,7 +54,7 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-// ─── Delete My Account ────────────────────────────────────────────
+// ─── Delete My Account (User) ────────────────────────────────
 export const deleteMyAccount = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.user._id);
@@ -68,19 +65,18 @@ export const deleteMyAccount = async (req, res) => {
   }
 };
 
-// ─── Delete User By ID (Admin Only) ───────────────────────────────
+// ─── Delete User by ID (Admin Only) ───────────────────────────
 export const deleteUser = async (req, res) => {
-  const userId = req.params.userId;
-
   try {
+    const userId = req.params.userId;
     const deletedUser = await User.findByIdAndDelete(userId);
-    if (!deletedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
+
+    if (!deletedUser) return res.status(404).json({ error: "User not found" });
 
     res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    console.error("Delete user error:", error);
+  } catch (err) {
+    console.error("Delete user error:", err);
     res.status(500).json({ error: "Failed to delete user" });
   }
 };
+
