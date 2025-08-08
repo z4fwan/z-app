@@ -4,26 +4,28 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
 
 import { connectDB } from "./lib/db.js";
-import { app, server } from "./lib/socket.js"; // includes HTTP and socket setup
+import { app, server } from "./lib/socket.js";
 
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
+import User from "./models/user.model.js";
 
-import User from "./models/user.model.js"; // for default admin creation
-import bcrypt from "bcryptjs";
-
+// ─── ENVIRONMENT & PATH SETUP ───────────────────────────────
 dotenv.config();
-
 const PORT = process.env.PORT || 5001;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── MIDDLEWARE ─────────────────────────────────────────────
 app.use(cors({
-  origin: ["http://localhost:5173", "https://z-app-official-frontend.onrender.com"],
+  origin: [
+    "http://localhost:5173",
+    "https://z-app-official-frontend.onrender.com",
+  ],
   credentials: true,
 }));
 app.use(express.json({ limit: "10mb" }));
@@ -36,21 +38,16 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ─── REMOVE frontend serving (since it's hosted separately) ─
-
-// ❌ REMOVE THIS BLOCK
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "../frontend/dist")));
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-//   });
-// }
+// ❌ DO NOT SERVE FRONTEND – It's hosted separately
 
 // ─── CONNECT DB AND START SERVER ────────────────────────────
-connectDB().then(() => {
+connectDB().then(async () => {
+  await createDefaultAdmin(); // ✅ Ensure admin exists before server starts
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+}).catch((err) => {
+  console.error("❌ Failed to connect to DB:", err.message);
 });
 
 // ─── CREATE DEFAULT ADMIN IF NOT EXISTS ─────────────────────
@@ -67,13 +64,9 @@ async function createDefaultAdmin() {
       });
       console.log("✅ Default admin created:", newAdmin.email);
     } else {
-      console.log("ℹ️ Default admin already exists.");
+      console.log("ℹ️ Default admin already exists:", existingAdmin.email);
     }
   } catch (err) {
     console.error("❌ Error creating default admin:", err.message);
   }
 }
-
-createDefaultAdmin();
-
-
