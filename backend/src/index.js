@@ -3,96 +3,83 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
-import { fileURLToPath } from "url";
-import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { fileURLToPath } from "url";
 
+import { connectDB } from "./lib/db.js";
+import { app, server } from "./lib/socket.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
-import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
-
 import User from "./models/user.model.js";
-import { app, server, io, userSocketMap } from "./lib/socket.js";
 
-// ─────────────────────────────────────────────────────────────
-
+// Load environment variables
 dotenv.config();
+const PORT = process.env.PORT || 5001;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// ── Database Connection ──────────────────────────────────────
+// Fix __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
-  });
-
-// ── Middleware ───────────────────────────────────────────────
-
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://z-app-official-frontend.onrender.com"],
+    origin: [FRONTEND_URL, "http://localhost:5173"],
     credentials: true,
   })
 );
 
-app.use(express.json());
-app.use(cookieParser());
-
-// ── API Routes ───────────────────────────────────────────────
-
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ── Deployment Support (Render Static Frontend) ──────────────
+// Serve frontend (production build)
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+}
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const frontendBuildPath = path.join(__dirname, "../frontend/dist");
-
-app.use(express.static(frontendBuildPath));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendBuildPath, "index.html"));
-});
-
-// ── Admin User Setup ─────────────────────────────────────────
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_PASSWORD = "safwan123"; // You may want to hash/store this securely
-
-const setupDefaultAdmin = async () => {
+// Create default admin if not exists
+const createDefaultAdmin = async () => {
   try {
-    const existingAdmin = await User.findOne({ email: ADMIN_EMAIL });
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+      console.warn("⚠️ ADMIN_EMAIL not set in .env");
+      return;
+    }
+
+    const existingAdmin = await User.findOne({ email: adminEmail });
+
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
-      const adminUser = new User({
-        email: ADMIN_EMAIL,
+      const hashedPassword = await bcrypt.hash("safwan123", 10);
+      const admin = new User({
+        fullName: "Admin",
+        email: adminEmail,
         password: hashedPassword,
-        username: "Admin",
         isAdmin: true,
+        isVerified: true,
       });
-      await adminUser.save();
-      console.log("✅ Default admin user created.");
+
+      await admin.save();
+      console.log(`✅ Default admin created: ${adminEmail}`);
     } else {
       console.log("ℹ️ Admin already exists.");
     }
   } catch (error) {
-    console.error("❌ Failed to create admin user:", error);
+    console.error("❌ Failed to create default admin:", error.message);
   }
 };
 
-setupDefaultAdmin();
-
-// ── Start Server ─────────────────────────────────────────────
-
-const PORT = process.env.PORT || 5001;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// Start server
+server.listen(PORT, async () => {
+  await connectDB();
+  await createDefaultAdmin();
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
 
