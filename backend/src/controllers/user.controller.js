@@ -1,5 +1,3 @@
-// src/controllers/user.controller.js
-
 import User from "../models/user.model.js";
 
 // ─── Get All Users (Admin Use) ─────────────────────────────────────
@@ -12,8 +10,8 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// ─── Get Single User Profile ──────────────────────────────────────
-export const getUserProfile = async (req, res) => {
+// ─── Get User by ID (if used elsewhere) ─────────────────────────────
+export const getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
     const user = await User.findById(userId).select("-password");
@@ -25,6 +23,21 @@ export const getUserProfile = async (req, res) => {
     res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user" });
+  }
+};
+
+// ─── Get Logged-in User's Profile ──────────────────────────────────
+export const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user profile" });
   }
 };
 
@@ -71,5 +84,3 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ error: "Failed to delete user" });
   }
 };
-
-
