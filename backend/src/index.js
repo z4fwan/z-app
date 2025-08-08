@@ -6,80 +6,90 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 
-// 📦 Custom imports
 import { connectDB } from "./lib/db.js";
-import { app, server } from "./lib/socket.js"; // Exports both app and server from socket.js
-import authRoutes from "./routes/auth.route.js";
-import messageRoutes from "./routes/message.route.js";
-import adminRoutes from "./routes/admin.route.js";
+import { app, server } from "./lib/socket.js"; // contains socket.io setup
 import User from "./models/user.model.js";
 
-// 🔐 Load environment variables
+// Load .env variables
 dotenv.config();
-const PORT = process.env.PORT || 5001;
 
-// 🔧 Fix __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// 🛠️ Middlewares
-app.use(express.json());
+// Middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Allow both localhost and deployed frontend in CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://z-app-official-frontend.onrender.com",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // ✅ Change to your frontend domain in production
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-// 📡 API Routes
+// ─────────────────────────────────────────────
+// Routes
+import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/message.route.js";
+import userRoutes from "./routes/user.route.js";
+import adminRoutes from "./routes/admin.route.js";
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// 🌐 Serve frontend build in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-  });
-}
-
-// 👑 Create default admin user
+// ─────────────────────────────────────────────
+// Create default admin user if not exists
 const createDefaultAdmin = async () => {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail) {
-      console.warn("⚠️ ADMIN_EMAIL not set in .env");
-      return;
-    }
-
-    const existingAdmin = await User.findOne({ email: adminEmail });
-
+    const existingAdmin = await User.findOne({ email: process.env.ADMIN_EMAIL });
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash("safwan123", 10); // You can change the default password
-      const admin = new User({
-        fullName: "Admin",
-        email: adminEmail,
+      const hashedPassword = await bcrypt.hash("safwan123", 10);
+      const newAdmin = new User({
+        username: "Admin",
+        email: process.env.ADMIN_EMAIL,
         password: hashedPassword,
         isAdmin: true,
         isVerified: true,
       });
-
-      await admin.save();
-      console.log(`✅ Default admin created: ${adminEmail}`);
+      await newAdmin.save();
+      console.log("✅ Default admin created");
     } else {
-      console.log("ℹ️ Admin already exists.");
+      console.log("ℹ️ Admin already exists");
     }
   } catch (error) {
-    console.error("❌ Failed to create default admin:", error.message);
+    console.error("❌ Error creating admin:", error.message);
   }
 };
 
-// 🚀 Start server
+// ─────────────────────────────────────────────
+// Serve frontend (optional)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../frontend/dist", "index.html"));
+  });
+}
+
+// ─────────────────────────────────────────────
+// Start Server
+const PORT = process.env.PORT || 5001;
 server.listen(PORT, async () => {
   await connectDB();
   await createDefaultAdmin();
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
