@@ -49,14 +49,14 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// 🔒 Remove frontend static serving (you host frontend separately)
-// ❌ DO NOT include these when frontend is not inside backend
-// app.use(express.static(path.join(__dirname, "frontend/dist")));
-// app.get("*", (req, res) => {
-//   res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
-// });
+// ✅ Serve frontend for production deployment
+app.use(express.static(path.join(__dirname, "frontend/dist")));
 
-// Default route
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+});
+
+// Default route (optional, not needed when frontend is served)
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
@@ -86,4 +86,3 @@ const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
