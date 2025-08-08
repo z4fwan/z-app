@@ -3,77 +3,87 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 
 import { connectDB } from "./lib/db.js";
-import { app as socketApp, server } from "./lib/socket.js";
+import { app, server } from "./lib/socket.js";
 
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
-
 import User from "./models/user.model.js";
-import bcrypt from "bcryptjs";
 
-// ─── Environment Setup ──────────────────────
+// Load env variables
 dotenv.config();
-const PORT = process.env.PORT || 5001;
+
+// Create __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ─── Middleware ─────────────────────────────
-socketApp.use(
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// CORS settings
+const allowedOrigins = [
+  "http://localhost:5173", // dev
+  "https://z-app-official-frontend.onrender.com", // prod
+];
+
+app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://z-app-official-frontend.onrender.com",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
-socketApp.use(cookieParser());
-socketApp.use(express.json());
-socketApp.use(express.urlencoded({ extended: true }));
 
-// ─── Routes ─────────────────────────────────
-socketApp.use("/api/auth", authRoutes);
-socketApp.use("/api/messages", messageRoutes);
-socketApp.use("/api/users", userRoutes);
-socketApp.use("/api/admin", adminRoutes);
+// API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
-// ─── Serve Frontend ─────────────────────────
-if (process.env.NODE_ENV === "production") {
-  socketApp.use(express.static(path.join(__dirname, "../client/dist")));
+// 🔒 Remove frontend static serving (you host frontend separately)
+// ❌ DO NOT include these when frontend is not inside backend
+// app.use(express.static(path.join(__dirname, "frontend/dist")));
+// app.get("*", (req, res) => {
+//   res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+// });
 
-  socketApp.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
-  });
-}
+// Default route
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
-// ─── Start Server ───────────────────────────
-const startServer = async () => {
-  await connectDB();
-
-  // ✅ Auto-create default admin if not exists
+// Automatically create admin if not exists
+const createAdmin = async () => {
   const adminEmail = process.env.ADMIN_EMAIL;
-  const existingAdmin = await User.findOne({ email: adminEmail });
+  const adminExists = await User.findOne({ email: adminEmail });
 
-  if (!existingAdmin) {
+  if (!adminExists) {
     const hashedPassword = await bcrypt.hash("safwan123", 10);
     await User.create({
+      username: "admin",
       email: adminEmail,
       password: hashedPassword,
-      username: "Admin",
       isAdmin: true,
       isVerified: true,
     });
-    console.log("✅ Default admin created:", adminEmail);
+    console.log("✅ Default admin created");
   }
-
-  server.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
 };
 
-startServer();
+createAdmin();
+
+// Start server
+const PORT = process.env.PORT || 5001;
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
