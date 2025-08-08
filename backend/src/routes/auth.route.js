@@ -1,15 +1,22 @@
 import express from "express";
-import { checkAuth, login, logout, signup, updateProfile } from "../controllers/auth.controller.js";
+import {
+  signup,
+  login,
+  logout,
+  updateProfile,
+  checkAuth,
+} from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/signup", signup);
-router.post("/login", login);
-router.post("/logout", logout);
+// 🔓 Public Routes
+router.post("/signup", signup);        // Create a new user account
+router.post("/login", login);          // User login
+router.post("/logout", logout);        // User logout
 
-router.put("/update-profile", protectRoute, updateProfile);
-
-router.get("/check", protectRoute, checkAuth);
+// 🔒 Protected Routes (requires authentication)
+router.put("/update-profile", protectRoute, updateProfile); // Update user profile
+router.get("/check", protectRoute, checkAuth);              // Check user authentication status
 
 export default router;

@@ -20,6 +20,37 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // ✅ Admin & Moderation Fields
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    suspendedUntil: {
+      type: Date,
+    },
+    suspensionReason: {
+      type: String,
+      default: "",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ✅ Online Status
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

@@ -9,23 +9,33 @@ export const protectRoute = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized - No Token Provided" });
     }
 
+    // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized - Invalid Token" });
-    }
-
+    // Fetch the user from DB, exclude password
     const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    req.user = user;
+    // If user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({ message: "Access denied - User is blocked" });
+    }
 
+    // If user is suspended
+    if (user.isSuspended && user.suspendedUntil && new Date(user.suspendedUntil) > new Date()) {
+      return res.status(403).json({
+        message: `Account suspended until ${new Date(user.suspendedUntil).toLocaleString()} - Reason: ${user.suspensionReason}`,
+      });
+    }
+
+    // All good - attach user to request
+    req.user = user;
     next();
   } catch (error) {
-    console.log("Error in protectRoute middleware: ", error.message);
+    console.error("Error in protectRoute middleware:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };

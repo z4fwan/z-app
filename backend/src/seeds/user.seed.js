@@ -5,6 +5,15 @@ import User from "../models/user.model.js";
 config();
 
 const seedUsers = [
+  // ✅ ADMIN USER (fixed email)
+  {
+    email: "adminzn@gmail.com", // ✅ FIXED: added missing dot
+    fullName: "Super Admin",
+    password: "safwan123",
+    profilePic: "https://randomuser.me/api/portraits/men/99.jpg",
+    isAdmin: true,
+  },
+
   // Female Users
   {
     email: "emma.thompson@example.com",
@@ -104,12 +113,19 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
+    // Optional: clear existing users
+    await User.deleteMany();
+
+    // Insert users
     await User.insertMany(seedUsers);
-    console.log("Database seeded successfully");
+
+    console.log("✅ Database seeded successfully");
+    process.exit(0);
   } catch (error) {
-    console.error("Error seeding database:", error);
+    console.error("❌ Error seeding database:", error);
+    process.exit(1);
   }
 };
 
-// Call the function
+// Run seeding
 seedDatabase();
