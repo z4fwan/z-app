@@ -2,9 +2,12 @@ import express from "express";
 import {
   getAllUsers,
   getUserById,
-  updateUser,
-  deleteUser,
+  getUserProfile,
+  updateUserProfile,
+  deleteMyAccount,
+  deleteUser, // Admin deletes user by ID
 } from "../controllers/user.controller.js";
+
 import { protectRoute, isAdmin } from "../middleware/protectRoute.js";
 
 const router = express.Router();
@@ -12,16 +15,22 @@ const router = express.Router();
 // 🔒 All routes below require authentication
 router.use(protectRoute);
 
-// ✅ Get all users (admin only)
+// ✅ Admin only - fetch all users
 router.get("/", isAdmin, getAllUsers);
 
-// ✅ Get user by ID
+// ✅ Admin only - delete any user by ID
+router.delete("/:userId", isAdmin, deleteUser);
+
+// ✅ Get your own profile
+router.get("/me", getUserProfile);
+
+// ✅ Update your own profile
+router.put("/me", updateUserProfile);
+
+// ✅ Delete your own account
+router.delete("/me", deleteMyAccount);
+
+// ✅ Get user by ID (for admin or public profile view)
 router.get("/:id", getUserById);
-
-// ✅ Update user (self or admin)
-router.put("/:id", updateUser);
-
-// ✅ Delete user (admin only)
-router.delete("/:id", isAdmin, deleteUser);
 
 export default router;
