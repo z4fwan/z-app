@@ -16,21 +16,27 @@ import User from "./models/user.model.js";
 // Load environment variables
 dotenv.config();
 const PORT = process.env.PORT || 5001;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Fix __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
+// CORS: allow local and deployed frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://z-app-frontend-2-0.onrender.com", // <-- your deployed frontend URL
+];
+
 app.use(
   cors({
-    origin: ["https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
+
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -39,7 +45,6 @@ app.use("/api/admin", adminRoutes);
 
 // Serve frontend (production build)
 if (process.env.NODE_ENV === "production") {
-  // ✅ Serve from backend/dist since build is copied here
   app.use(express.static(path.join(__dirname, "./dist")));
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "./dist/index.html"));
