@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "rm -rf ../backend/dist && mkdir ../backend/dist && cp -r dist/* ../backend/dist",
+    "postbuild": "rm -rf ../backend/dist && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -35,6 +35,6 @@
     "postcss": "^8.4.49",
     "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.15",
-    "vite": "^5.4.19"
+    "vite": "^5.4.9"
   }
 }
