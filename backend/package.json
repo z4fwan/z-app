@@ -3,16 +3,13 @@
   "version": "1.0.0",
   "description": "Backend for Z-App with integrated frontend build",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "NODE_ENV=production node src/index.js",
     "build:frontend": "cd ../frontend && npm ci && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
     "postinstall": "npm run build:frontend"
   },
-  "keywords": [],
-  "author": "",
-  "type": "module",
-  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
@@ -29,5 +26,9 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
+
