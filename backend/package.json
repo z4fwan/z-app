@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "build:frontend": "cd ../frontend && npm install && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
+    "build:frontend": "cd ../frontend && npm install --include=dev && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
     "postinstall": "npm run build:frontend"
   },
   "dependencies": {
