@@ -4,6 +4,6 @@ export const axiosInstance = axios.create({
   baseURL:
     import.meta.env.MODE === "development"
       ? "http://localhost:5001/api"
-      : import.meta.env.VITE_API_BASE_URL + "/api",
+      : "https://z-app-6w36.onrender.com/api", // <-- your backend Render URL
   withCredentials: true,
 });
