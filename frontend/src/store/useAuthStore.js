@@ -16,15 +16,10 @@ export const useAuthStore = create((set, get) => ({
   socket: null,
 
   checkAuth: async () => {
+    set({ isCheckingAuth: true });
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        set({ authUser: null, isCheckingAuth: false });
-        return;
-      }
-
       const res = await axiosInstance.get("/auth/check", {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true, // Use cookies for auth
       });
       const user = res.data;
 
@@ -53,12 +48,10 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
-      const res = await axiosInstance.post("/auth/signup", data);
+      const res = await axiosInstance.post("/auth/signup", data, {
+        withCredentials: true,
+      });
       const user = res.data;
-
-      if (user.token) {
-        localStorage.setItem("token", user.token);
-      }
 
       set({ authUser: user });
       localStorage.setItem("authUser", JSON.stringify(user));
@@ -74,7 +67,9 @@ export const useAuthStore = create((set, get) => ({
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
-      const res = await axiosInstance.post("/auth/login", data);
+      const res = await axiosInstance.post("/auth/login", data, {
+        withCredentials: true,
+      });
       const user = res.data;
 
       if (user.isBlocked) {
@@ -85,10 +80,6 @@ export const useAuthStore = create((set, get) => ({
       if (user.suspension && new Date(user.suspension.endTime) > new Date()) {
         toast.error("Account is suspended");
         return;
-      }
-
-      if (user.token) {
-        localStorage.setItem("token", user.token);
       }
 
       set({ authUser: user });
@@ -104,13 +95,12 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     try {
-      await axiosInstance.post("/auth/logout");
+      await axiosInstance.post("/auth/logout", {}, { withCredentials: true });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
       set({ authUser: null });
       localStorage.removeItem("authUser");
-      localStorage.removeItem("token");
       get().disconnectSocket();
       toast.success("Logged out successfully");
     }
@@ -119,9 +109,8 @@ export const useAuthStore = create((set, get) => ({
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
-      const token = localStorage.getItem("token");
       const res = await axiosInstance.put("/auth/update-profile", data, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
       const user = res.data;
       set({ authUser: user });
@@ -158,7 +147,6 @@ export const useAuthStore = create((set, get) => ({
       toast.error(msg);
       set({ authUser: null });
       localStorage.removeItem("authUser");
-      localStorage.removeItem("token");
       get().disconnectSocket();
     };
 
@@ -192,4 +180,3 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 }));
-

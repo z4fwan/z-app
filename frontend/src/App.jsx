@@ -1,4 +1,3 @@
-// src/App.jsx
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader } from "lucide-react";
@@ -33,6 +32,7 @@ const App = () => {
   // On mount, check if user is logged in
   useEffect(() => {
     checkAuth();
+    // eslint-disable-next-line
   }, []);
 
   // On load, if suspended, redirect
@@ -42,7 +42,7 @@ const App = () => {
     }
   }, [authUser, navigate]);
 
-  // ✅ Socket event listener: suspend, block, delete
+  // Socket event listener: suspend, block, delete
   useEffect(() => {
     if (!socket || !authUser?._id) return;
 
@@ -77,7 +77,8 @@ const App = () => {
     };
   }, [socket, authUser, navigate, setAuthUser]);
 
-  if (isCheckingAuth && !authUser) {
+  // Show loader until auth check is done
+  if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader className="size-10 animate-spin" />

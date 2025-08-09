@@ -7,9 +7,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+frontend/node_modules
+backend/node_modules
 
+# Frontend build output (ignored — copied to backend/dist instead)
+frontend/dist
+
+# Server build output (KEEP backend/dist in Git)
+# Do NOT ignore backend/dist so production can serve it
+
+# SSR build output
 dist-ssr
+
+# Local files
 *.local
 
 # Editor directories and files
@@ -23,4 +35,5 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables
 .env

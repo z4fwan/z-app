@@ -7,44 +7,46 @@ import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 
 import { connectDB } from "./lib/db.js";
-import { app, server } from "./lib/socket.js"; // Make sure socket.js exports app and server
+import { app, server } from "./lib/socket.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import User from "./models/user.model.js";
 
-// ✅ Load environment variables
+// Load environment variables
 dotenv.config();
 const PORT = process.env.PORT || 5001;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
-// ✅ Fix __dirname for ES Modules
+// Fix __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Middlewares
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // ⚠️ Update to your frontend URL in production
+    origin: [FRONTEND_URL, "http://localhost:5173"],
     credentials: true,
   })
 );
 
-// ✅ Routes
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ✅ Serve frontend (production build)
+// Serve frontend (production build)
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  // ✅ Serve from backend/dist since build is copied here
+  app.use(express.static(path.join(__dirname, "./dist")));
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+    res.sendFile(path.join(__dirname, "./dist/index.html"));
   });
 }
 
-// ✅ Create default admin if not exists
+// Create default admin if not exists
 const createDefaultAdmin = async () => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -56,7 +58,7 @@ const createDefaultAdmin = async () => {
     const existingAdmin = await User.findOne({ email: adminEmail });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash("safwan123", 10); // You can change this default password
+      const hashedPassword = await bcrypt.hash("safwan123", 10);
       const admin = new User({
         fullName: "Admin",
         email: adminEmail,
@@ -75,7 +77,7 @@ const createDefaultAdmin = async () => {
   }
 };
 
-// ✅ Start server
+// Start server
 server.listen(PORT, async () => {
   await connectDB();
   await createDefaultAdmin();
