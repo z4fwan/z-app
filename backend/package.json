@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "build:frontend": "cd ../frontend && npm ci && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
+    "build:frontend": "cd ../frontend && npm ci && npm install vite && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
     "postinstall": "npm run build:frontend"
   },
   "dependencies": {
@@ -19,7 +19,8 @@
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "vite": "^5.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
@@ -31,3 +32,4 @@
   "author": "",
   "license": "ISC"
 }
+
