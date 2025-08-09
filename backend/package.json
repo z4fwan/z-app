@@ -1,11 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend for Z-App with integrated frontend build",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "NODE_ENV=production node src/index.js",
+    "build:frontend": "cd ../frontend && npm ci && npm run build && mkdir -p ../backend/dist && cp -r dist/* ../backend/dist",
+    "postinstall": "npm run build:frontend"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +25,9 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "@svgr/webpack": "^8.1.0",
     "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
