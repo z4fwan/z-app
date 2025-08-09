@@ -49,16 +49,12 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ✅ Serve frontend for production deployment
-app.use(express.static(path.join(__dirname, "frontend/dist")));
+// ✅ Serve frontend for production
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+app.use(express.static(frontendPath));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
-});
-
-// Default route (optional, not needed when frontend is served)
-app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // Automatically create admin if not exists
@@ -86,3 +82,4 @@ const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
