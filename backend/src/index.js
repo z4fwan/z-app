@@ -2,9 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
+import path from "path";
 
 import { connectDB } from "./lib/db.js";
 import { app, server } from "./lib/socket.js";
@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
+    origin: [FRONTEND_URL, "https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
     credentials: true,
   })
 );
@@ -37,14 +37,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Serve frontend (production build)
-if (process.env.NODE_ENV === "production") {
-  // ✅ Serve from backend/dist since build is copied here
-  app.use(express.static(path.join(__dirname, "./dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "./dist/index.html"));
-  });
-}
+// ❌ Removed serving frontend files — backend is API-only
 
 // Create default admin if not exists
 const createDefaultAdmin = async () => {
@@ -83,3 +76,4 @@ server.listen(PORT, async () => {
   await createDefaultAdmin();
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
