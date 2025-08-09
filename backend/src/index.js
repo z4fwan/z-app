@@ -22,20 +22,13 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Trust proxy so cookies work on Render/HTTPS
-app.set("trust proxy", 1);
-
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-
-// ✅ CORS setup for cross-origin cookies
 app.use(
   cors({
-    origin: [FRONTEND_URL, "https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
+    origin: ["https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -46,6 +39,7 @@ app.use("/api/admin", adminRoutes);
 
 // Serve frontend (production build)
 if (process.env.NODE_ENV === "production") {
+  // ✅ Serve from backend/dist since build is copied here
   app.use(express.static(path.join(__dirname, "./dist")));
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "./dist/index.html"));
