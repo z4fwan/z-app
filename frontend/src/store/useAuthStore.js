@@ -3,8 +3,11 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
+// ✅ Use backend URL in production
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5001" // Local backend
+    : "https://z-app-6w36.onrender.com"; // ⬅️ Replace with your backend Render URL
 
 export const useAuthStore = create((set, get) => ({
   authUser: JSON.parse(localStorage.getItem("authUser")) || null,
@@ -18,9 +21,7 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     set({ isCheckingAuth: true });
     try {
-      const res = await axiosInstance.get("/auth/check", {
-        withCredentials: true, // Use cookies for auth
-      });
+      const res = await axiosInstance.get("/auth/check", { withCredentials: true });
       const user = res.data;
 
       if (user.isBlocked) {
@@ -48,9 +49,7 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
-      const res = await axiosInstance.post("/auth/signup", data, {
-        withCredentials: true,
-      });
+      const res = await axiosInstance.post("/auth/signup", data, { withCredentials: true });
       const user = res.data;
 
       set({ authUser: user });
@@ -67,9 +66,7 @@ export const useAuthStore = create((set, get) => ({
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
-      const res = await axiosInstance.post("/auth/login", data, {
-        withCredentials: true,
-      });
+      const res = await axiosInstance.post("/auth/login", data, { withCredentials: true });
       const user = res.data;
 
       if (user.isBlocked) {
@@ -109,9 +106,7 @@ export const useAuthStore = create((set, get) => ({
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
-      const res = await axiosInstance.put("/auth/update-profile", data, {
-        withCredentials: true,
-      });
+      const res = await axiosInstance.put("/auth/update-profile", data, { withCredentials: true });
       const user = res.data;
       set({ authUser: user });
       localStorage.setItem("authUser", JSON.stringify(user));
@@ -131,6 +126,7 @@ export const useAuthStore = create((set, get) => ({
     const newSocket = io(BASE_URL, {
       query: { userId: authUser._id },
       transports: ["websocket"],
+      withCredentials: true,
     });
 
     set({ socket: newSocket });
