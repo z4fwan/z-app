@@ -51,8 +51,8 @@ app.use("/api/admin", adminRoutes);
 
 // ✅ Serve frontend only in production
 if (process.env.NODE_ENV === "production") {
-  // On Render, frontend is built into backend/dist from postinstall script
-  const frontendPath = path.join(__dirname, "./dist");
+  // frontend/dist is copied into backend/dist by the build script
+  const frontendPath = path.join(__dirname, "../dist");
   app.use(express.static(frontendPath));
 
   app.get("*", (req, res) => {
@@ -63,7 +63,10 @@ if (process.env.NODE_ENV === "production") {
 // Automatically create admin if not exists
 const createAdmin = async () => {
   const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) return console.warn("⚠ ADMIN_EMAIL not set in .env");
+  if (!adminEmail) {
+    console.warn("⚠ ADMIN_EMAIL not set in .env");
+    return;
+  }
 
   const adminExists = await User.findOne({ email: adminEmail });
 
