@@ -32,8 +32,8 @@ app.use(cookieParser());
 
 // CORS settings
 const allowedOrigins = [
-  "http://localhost:5173", // dev
-  "https://z-app-official-frontend.onrender.com", // prod
+  "http://localhost:5173", // Dev
+  "https://z-app-official-frontend.onrender.com", // Prod
 ];
 
 app.use(
@@ -49,17 +49,22 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 
-// ✅ Serve frontend for production
-const frontendPath = path.join(__dirname, "../../frontend/dist");
-app.use(express.static(frontendPath));
+// ✅ Serve frontend only in production
+if (process.env.NODE_ENV === "production") {
+  // On Render, frontend is built into backend/dist from postinstall script
+  const frontendPath = path.join(__dirname, "./dist");
+  app.use(express.static(frontendPath));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
 
 // Automatically create admin if not exists
 const createAdmin = async () => {
   const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return console.warn("⚠ ADMIN_EMAIL not set in .env");
+
   const adminExists = await User.findOne({ email: adminEmail });
 
   if (!adminExists) {
