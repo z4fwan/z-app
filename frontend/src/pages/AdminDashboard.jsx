@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
+import { axiosInstance } from "../lib/axios"; // <-- import your axios instance
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -11,8 +11,12 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("/api/admin/users", { withCredentials: true });
-      const userList = Array.isArray(res.data.users) ? res.data.users : Array.isArray(res.data) ? res.data : [];
+      const res = await axiosInstance.get("/admin/users");
+      const userList = Array.isArray(res.data.users)
+        ? res.data.users
+        : Array.isArray(res.data)
+        ? res.data
+        : [];
       setUsers(userList);
     } catch (err) {
       console.error("Error fetching users", err);
@@ -33,8 +37,8 @@ const AdminDashboard = () => {
         setSuspendModal({ show: true, userId });
         return;
       }
-      const url = `/api/admin/${action}/${userId}`;
-      const res = await axios.put(url, {}, { withCredentials: true });
+      const url = `/admin/${action}/${userId}`;
+      const res = await axiosInstance.put(url);
       toast.success(res.data.message || `${action} success`);
       fetchUsers();
     } catch (err) {
@@ -45,10 +49,9 @@ const AdminDashboard = () => {
 
   const confirmSuspend = async () => {
     try {
-      const res = await axios.put(
-        `/api/admin/suspend/${suspendModal.userId}`,
-        { reason: suspendReason, until: getFutureDate(suspendDuration) },
-        { withCredentials: true }
+      const res = await axiosInstance.put(
+        `/admin/suspend/${suspendModal.userId}`,
+        { reason: suspendReason, until: getFutureDate(suspendDuration) }
       );
       toast.success(res.data.message || "User suspended");
       setSuspendModal({ show: false, userId: null });
@@ -75,7 +78,7 @@ const AdminDashboard = () => {
 
   const handleDelete = async (userId) => {
     try {
-      const res = await axios.delete(`/api/admin/delete/${userId}`, { withCredentials: true });
+      const res = await axiosInstance.delete(`/admin/delete/${userId}`);
       toast.success(res.data.message || "User deleted");
       fetchUsers();
     } catch (err) {
@@ -196,8 +199,15 @@ const AdminDashboard = () => {
               </select>
             </label>
             <div className="flex justify-end gap-2">
-              <button className="btn btn-outline" onClick={() => setSuspendModal({ show: false, userId: null })}>Cancel</button>
-              <button className="btn btn-warning" onClick={confirmSuspend}>Suspend</button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setSuspendModal({ show: false, userId: null })}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-warning" onClick={confirmSuspend}>
+                Suspend
+              </button>
             </div>
           </div>
         </div>
