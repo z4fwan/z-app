@@ -16,7 +16,7 @@ const seedUsers = [
    {
     email: "z4fwan77@gamil.com", // ✅ FIXED: added missing dot
     fullName: "z4fwan",
-    password: "Safwan@123",
+    password: "safwan123",
     profilePic: "https://randomuser.me/api/portraits/men/99.jpg",
     isAdmin: true,
   },
