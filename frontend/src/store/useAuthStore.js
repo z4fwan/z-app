@@ -3,14 +3,13 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// ✅ Use backend URL in production
 const BASE_URL =
   import.meta.env.MODE === "development"
-    ? "http://localhost:5001" // Local backend
-    : "https://z-app-6w36.onrender.com"; // ⬅️ Replace with your backend Render URL
+    ? "http://localhost:5001"
+    : "https://z-app-6w36.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
-  authUser: JSON.parse(localStorage.getItem("authUser")) || null,
+  authUser: null, // ⬅️ Start with null, not localStorage value
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
@@ -38,7 +37,6 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem("authUser", JSON.stringify(user));
       get().connectSocket();
     } catch (error) {
-      console.error("Error in checkAuth:", error);
       set({ authUser: null });
       localStorage.removeItem("authUser");
     } finally {
@@ -51,7 +49,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/signup", data, { withCredentials: true });
       const user = res.data;
-
       set({ authUser: user });
       localStorage.setItem("authUser", JSON.stringify(user));
       toast.success("Account created successfully");
@@ -96,8 +93,8 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      localStorage.removeItem("authUser"); // ⬅️ Clear immediately
       set({ authUser: null });
-      localStorage.removeItem("authUser");
       get().disconnectSocket();
       toast.success("Logged out successfully");
     }
@@ -112,7 +109,6 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem("authUser", JSON.stringify(user));
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.log("Error in updateProfile:", error);
       toast.error(error.response?.data?.message || "Profile update failed");
     } finally {
       set({ isUpdatingProfile: false });
@@ -131,13 +127,8 @@ export const useAuthStore = create((set, get) => ({
 
     set({ socket: newSocket });
 
-    newSocket.on("connect", () => {
-      console.log("✅ Socket connected");
-    });
-
-    newSocket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
-    });
+    newSocket.on("connect", () => console.log("✅ Socket connected"));
+    newSocket.on("getOnlineUsers", (userIds) => set({ onlineUsers: userIds }));
 
     const forceLogout = (msg) => {
       toast.error(msg);
@@ -149,18 +140,9 @@ export const useAuthStore = create((set, get) => ({
     newSocket.on("user-suspended", ({ reason }) => {
       forceLogout(`You have been suspended. Reason: ${reason || "No reason provided"}`);
     });
-
-    newSocket.on("user-blocked", () => {
-      forceLogout("Your account has been blocked by the admin.");
-    });
-
-    newSocket.on("user-deleted", () => {
-      forceLogout("Your account has been deleted by the admin.");
-    });
-
-    newSocket.on("disconnect", () => {
-      console.log("⚠️ Socket disconnected");
-    });
+    newSocket.on("user-blocked", () => forceLogout("Your account has been blocked by the admin."));
+    newSocket.on("user-deleted", () => forceLogout("Your account has been deleted by the admin."));
+    newSocket.on("disconnect", () => console.log("⚠️ Socket disconnected"));
 
     newSocket.io.on("reconnect", async () => {
       console.log("🔄 Socket reconnected");
