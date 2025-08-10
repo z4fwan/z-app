@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import cloudinary from "../lib/cloudinary.js";
 import User from "../models/user.model.js";
 import { generateToken } from "../lib/utils.js";
@@ -7,7 +6,6 @@ import { generateToken } from "../lib/utils.js";
 // ─── Signup ─────────────────────────────────────────────
 export const signup = async (req, res) => {
   const { fullName, email, password, profilePic } = req.body;
-  console.log("Signup request body:", req.body);
 
   try {
     if (!fullName || !email || !password) {
@@ -55,8 +53,6 @@ export const signup = async (req, res) => {
       isAdmin: newUser.email === process.env.ADMIN_EMAIL,
       isBlocked: newUser.isBlocked,
       isSuspended: newUser.isSuspended,
-      isVerified: newUser.isVerified,
-      isOnline: newUser.isOnline,
       createdAt: newUser.createdAt,
     });
   } catch (error) {
@@ -89,8 +85,6 @@ export const login = async (req, res) => {
       isAdmin: user.email === process.env.ADMIN_EMAIL,
       isBlocked: user.isBlocked,
       isSuspended: user.isSuspended,
-      isVerified: user.isVerified,
-      isOnline: user.isOnline,
       createdAt: user.createdAt,
     });
   } catch (error) {
@@ -105,7 +99,8 @@ export const logout = (req, res) => {
     res.clearCookie("jwt", {
       httpOnly: true,
       sameSite: "strict",
-      secure: process.env.NODE_ENV === "production", // match login cookie settings
+      secure: process.env.NODE_ENV === "production",
+      path: "/", // ensure cookie is removed from all paths
     });
     res.status(200).json({ message: "Logged out successfully." });
   } catch (error) {
@@ -152,8 +147,6 @@ export const checkAuth = async (req, res) => {
       isAdmin: user.email === process.env.ADMIN_EMAIL,
       isBlocked: user.isBlocked,
       isSuspended: user.isSuspended,
-      isVerified: user.isVerified,
-      isOnline: user.isOnline,
       createdAt: user.createdAt,
     });
   } catch (error) {
