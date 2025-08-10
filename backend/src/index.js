@@ -25,10 +25,25 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// ✅ Fixed CORS configuration
+const allowedOrigins = [
+  FRONTEND_URL,
+  "https://z-app-frontend-2-0.onrender.com",
+  "http://localhost:5173",
+];
+
 app.use(
   cors({
-    origin: [FRONTEND_URL, "https://z-app-frontend-2-0.onrender.com", "http://localhost:5173"],
-    credentials: true,
+    origin: function (origin, callback) {
+      // Allow requests without origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"), false);
+    },
+    credentials: true, // 🔑 Required for sending cookies
   })
 );
 
@@ -36,8 +51,6 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/admin", adminRoutes);
-
-// ❌ Removed serving frontend files — backend is API-only
 
 // Create default admin if not exists
 const createDefaultAdmin = async () => {
@@ -76,4 +89,3 @@ server.listen(PORT, async () => {
   await createDefaultAdmin();
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
