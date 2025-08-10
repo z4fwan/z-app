@@ -6,18 +6,22 @@ import { generateToken } from "../lib/utils.js";
 // ─── Signup ─────────────────────────────────────────────
 export const signup = async (req, res) => {
   const { fullName, email, password, profilePic } = req.body;
+  console.log("Signup request body:", req.body);
 
   try {
     if (!fullName || !email || !password) {
+      console.log("Missing fields");
       return res.status(400).json({ message: "All fields are required." });
     }
 
     if (password.length < 6) {
+      console.log("Password too short");
       return res.status(400).json({ message: "Password must be at least 6 characters long." });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log("Email already registered");
       return res.status(409).json({ message: "Email is already registered." });
     }
 
@@ -27,8 +31,10 @@ export const signup = async (req, res) => {
     let uploadedProfilePic = "";
     if (profilePic) {
       try {
+        console.log("Uploading profilePic to Cloudinary...");
         const uploadResult = await cloudinary.uploader.upload(profilePic);
         uploadedProfilePic = uploadResult.secure_url;
+        console.log("Cloudinary upload success:", uploadedProfilePic);
       } catch (uploadError) {
         console.error("Cloudinary Upload Error:", uploadError);
         return res.status(500).json({ message: "Failed to upload profile picture." });
@@ -43,6 +49,7 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
+    console.log("User saved:", newUser._id);
     generateToken(newUser._id, res);
 
     res.status(201).json({
@@ -53,6 +60,8 @@ export const signup = async (req, res) => {
       isAdmin: newUser.email === process.env.ADMIN_EMAIL,
       isBlocked: newUser.isBlocked,
       isSuspended: newUser.isSuspended,
+      isVerified: newUser.isVerified,
+      isOnline: newUser.isOnline,
       createdAt: newUser.createdAt,
     });
   } catch (error) {
@@ -85,6 +94,8 @@ export const login = async (req, res) => {
       isAdmin: user.email === process.env.ADMIN_EMAIL,
       isBlocked: user.isBlocked,
       isSuspended: user.isSuspended,
+      isVerified: user.isVerified,
+      isOnline: user.isOnline,
       createdAt: user.createdAt,
     });
   } catch (error) {
@@ -96,12 +107,7 @@ export const login = async (req, res) => {
 // ─── Logout ─────────────────────────────────────────────
 export const logout = (req, res) => {
   try {
-    res.clearCookie("jwt", {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-      path: "/", // ensure cookie is removed from all paths
-    });
+    res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully." });
   } catch (error) {
     console.error("Logout Error:", error);
@@ -147,6 +153,8 @@ export const checkAuth = async (req, res) => {
       isAdmin: user.email === process.env.ADMIN_EMAIL,
       isBlocked: user.isBlocked,
       isSuspended: user.isSuspended,
+      isVerified: user.isVerified,
+      isOnline: user.isOnline,
       createdAt: user.createdAt,
     });
   } catch (error) {
