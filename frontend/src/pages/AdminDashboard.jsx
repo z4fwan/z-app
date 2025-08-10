@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { axiosInstance } from "../lib/axios"; // <-- import your axios instance
+import { axiosInstance } from "../lib/axios";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -88,9 +88,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="h-screen pt-20 px-4 bg-base-200 overflow-auto">
-      <div className="max-w-7xl mx-auto bg-base-100 shadow-lg rounded-xl p-8">
-        <h1 className="text-4xl font-bold mb-8 text-center">Admin Dashboard</h1>
+    <div className="h-screen pt-20 px-2 sm:px-4 bg-base-200 overflow-auto">
+      <div className="max-w-7xl mx-auto bg-base-100 shadow-lg rounded-xl p-4 sm:p-8">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-6 text-center">Admin Dashboard</h1>
 
         {loading ? (
           <div className="text-center text-lg">Loading users...</div>
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
           <div className="overflow-x-auto">
             <table className="table w-full table-zebra">
               <thead>
-                <tr className="text-base font-semibold text-center">
+                <tr className="text-sm sm:text-base font-semibold text-center">
                   <th>#</th>
                   <th>Name</th>
                   <th>Email</th>
@@ -113,24 +113,25 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {users.map((user, idx) => (
-                  <tr key={user._id} className="text-center">
+                  <tr key={user._id} className="text-center text-sm sm:text-base">
                     <td>{idx + 1}</td>
-                    <td className="flex items-center gap-2 justify-center">
+                    <td className="flex items-center gap-1 sm:gap-2 justify-center">
                       {user.fullName}
                       {user.isVerified && <span className="text-blue-500 text-lg">✔️</span>}
                     </td>
-                    <td>{user.email}</td>
+                    <td className="truncate max-w-[120px] sm:max-w-none">{user.email}</td>
                     <td>{user.isOnline ? "🟢 Online" : "⚪ Offline"}</td>
                     <td>{user.isVerified ? "✅" : "❌"}</td>
-                    <td>{user.isSuspended ? "⏸️ Suspended" : "—"}</td>
-                    <td>{user.isBlocked ? "🚫 Blocked" : "—"}</td>
+                    <td>{user.isSuspended ? "⏸️" : "—"}</td>
+                    <td>{user.isBlocked ? "🚫" : "—"}</td>
                     <td>
-                      <div className="flex flex-wrap justify-center gap-2 max-w-[300px]">
+                      {/* Responsive button row */}
+                      <div className="flex flex-nowrap justify-center gap-1 sm:gap-2 overflow-x-auto">
                         <button
                           onClick={() =>
                             handleAction(user._id, user.isSuspended ? "unsuspend" : "suspend")
                           }
-                          className="btn btn-xs sm:btn-sm btn-warning"
+                          className="btn btn-[10px] btn-warning btn-xs sm:btn-sm"
                         >
                           {user.isSuspended ? "Unsuspend" : "Suspend"}
                         </button>
@@ -138,7 +139,7 @@ const AdminDashboard = () => {
                           onClick={() =>
                             handleAction(user._id, user.isBlocked ? "unblock" : "block")
                           }
-                          className={`btn btn-xs sm:btn-sm ${
+                          className={`btn btn-[10px] btn-xs sm:btn-sm ${
                             user.isBlocked ? "btn-outline btn-neutral" : "btn-error"
                           }`}
                         >
@@ -148,7 +149,7 @@ const AdminDashboard = () => {
                           onClick={() =>
                             handleAction(user._id, user.isVerified ? "unverify" : "verify")
                           }
-                          className={`btn btn-xs sm:btn-sm ${
+                          className={`btn btn-[10px] btn-xs sm:btn-sm ${
                             user.isVerified ? "btn-outline btn-info" : "btn-success"
                           }`}
                         >
@@ -156,7 +157,7 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           onClick={() => handleDelete(user._id)}
-                          className="btn btn-xs sm:btn-sm btn-outline btn-error"
+                          className="btn btn-[10px] btn-xs sm:btn-sm btn-outline btn-error"
                         >
                           Delete
                         </button>
@@ -200,12 +201,12 @@ const AdminDashboard = () => {
             </label>
             <div className="flex justify-end gap-2">
               <button
-                className="btn btn-outline"
+                className="btn btn-outline btn-sm"
                 onClick={() => setSuspendModal({ show: false, userId: null })}
               >
                 Cancel
               </button>
-              <button className="btn btn-warning" onClick={confirmSuspend}>
+              <button className="btn btn-warning btn-sm" onClick={confirmSuspend}>
                 Suspend
               </button>
             </div>
